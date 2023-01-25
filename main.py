@@ -6,7 +6,7 @@ from algorithms.bidirectional import bidirectional
 from algorithms.greedy import greedy
 
 import signal
-from sys import exit
+import sys
 import time
 from utils import *
 
@@ -24,18 +24,27 @@ signal.signal(signal.SIGINT, handler)
 
 # define algorithms
 algorithms = [
-  ("bfs", bfs),
-  ("dfs", dfs),
-  ("dijkstras", dijkstras),
   ("aStar", aStar),
   ("bidirectional", bidirectional),
+  ("bfs", bfs),
+  ("dijkstras", dijkstras),
+  ("dfs", dfs),
   ("greedy", greedy)
 ]
+
+HEADER = ["Trial", "bfs", "bfs (cost)", "dfs", "dfs (cost)", "dijkstras", "dijkstras (cost)", "aStar", "aStar (cost)", "bidirectional", "bidirectional (cost)", "greedy", "greedy (cost)"]
 
 N = 1024
 maxLength = 25
 sX = 400
 sY = 400
+
+def getDataLength(file="1024.csv"):
+  # print number of lines in csv file
+  with open(file, 'r') as file:
+    reader = csv.reader(file)
+    row_count = sum(1 for row in reader)
+    return row_count - 1
 
 def saveData(data):
   # append data to csv file in excel format
@@ -43,21 +52,25 @@ def saveData(data):
     writer = csv.writer(file)
     # add header if empty
     if os.stat('1024.csv').st_size == 0:
-      writer.writerow(["Algorithm", "Time (ms)", "Cost"])
+      writer.writerow(HEADER)
     writer.writerows(data)
-
-  # print number of lines in csv file
-  with open('1024.csv', 'r') as file:
-    reader = csv.reader(file)
-    row_count = sum(1 for row in reader)
-    print("Number of lines in csv file: " + str(row_count - 1))
-    # print number of trials
-    print("Number of trials: " + str((row_count - 1) / len(algorithms)))
 data = [] # list of data to be written to csv file
 
 saveData(data)
 
-while on:
+i = 0
+try:
+  limit = sys.argv[1]
+except IndexError:
+  limit = 10000
+
+if limit == "forever":
+  limit = None
+else:
+  limit = int(limit)
+
+while on and ((i < limit) if limit != None else True):
+  currentData = [getDataLength() + len(data)] + [None] * (len(HEADER) - 1) # add len(data) to account for data that has not been written to csv file
   # create random graph
   [points, adjList] = createRandomGraph2(N, sX, sY, maxLength)
 
@@ -74,20 +87,31 @@ while on:
     path = algorithm(adjList, getDistance, points, source, destination)
     end = time.perf_counter()
 
-    if path == -1 or type(path) != list:
-      print("              Path not found: " + name)
-      data.append([name, (end - start) * 1000, -1])
-    else:
-      try:   
-        data.append([name, (end - start) * 1000, getCost(points, path)])
-      except:
-        data.append([name, (end - start) * 1000, -1])
+    # save data
+    currentData[HEADER.index(name)] = end - start
+    currentData[HEADER.index(name + " (cost)")] = -1 # default cost to -1
+    if path != -1:
+      currentData[HEADER.index(name + " (cost)")] = getCost(points, path) # if valid path, save cost
 
-    # save data to csv file if data is 1000 points or above
-    if len(data) >= 1000:
-      saveData(data)
-      data = []
+  data.append(currentData)
+
+  # save data to csv file if data is 1000 points or above
+  if len(data) >= 1000:
+    saveData(data)
+    data = []
+
+  # clear console
+  os.system('cls')
+  # print number of trials and progress if limit is not None
+  print(f"Trial {i + 1}")
+  if limit != None:
+    print(f"{(i + 1) / limit * 100}%")
+
+  i += 1
 
 saveData(data)
 
-exit()
+# print number of trials in 1024.csv
+print(f"Number of trials: {getDataLength()}")
+
+sys.exit()
