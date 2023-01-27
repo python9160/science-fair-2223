@@ -25,9 +25,12 @@ def dijkstras(adjList, getDistance, points, source, destination):
 
   path = []
   current = destination
-  while parent[current] != current: # this is only false for start node
-    path.append(current)
-    current = parent[current] # move up hierarchy
-  path.append(source)
+  try: # sometimes parent[current] doesn't exist
+    while parent[current] != current: # this is only false for start node
+      path.append(current)
+      current = parent[current] # move up hierarchy
+    path.append(source)
+  except KeyError:
+    return -1
   path.reverse()
   return path

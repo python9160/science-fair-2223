@@ -90,7 +90,7 @@ while on and ((i < limit) if limit != None else True):
     # save data
     currentData[HEADER.index(name)] = end - start
     currentData[HEADER.index(name + " (cost)")] = -1 # default cost to -1
-    if path != -1:
+    if path != -1 and type(path) == list and len(path) > 0:
       currentData[HEADER.index(name + " (cost)")] = getCost(points, path) # if valid path, save cost
 
   data.append(currentData)
@@ -106,6 +106,7 @@ while on and ((i < limit) if limit != None else True):
   print(f"Trial {i + 1}")
   if limit != None:
     print(f"{(i + 1) / limit * 100}%")
+  print("-" * round(200 * (len(data) / 1000)))
 
   i += 1
 
